@@ -5,6 +5,7 @@ class EmailsController < ApplicationController
 
   def new
     @email = Email.new
+    @templates = Template.all
   end
 
   def show
@@ -12,7 +13,15 @@ class EmailsController < ApplicationController
   end
 
   def create
-    @email = Email.new(email_params)
+    
+    @email = Email.new()
+    @email.subject = email_params[:subject]
+    @email.body = email_params[:body]
+    @template = Template.find_by_id(email_params[:template])
+
+    if @template.present?
+      @email.body = @template.body.gsub("{{-placeholder-}}", @email.body)
+    end
 
     if @email.save
       Subscriber.all.each do |subscriber|
@@ -27,6 +36,6 @@ class EmailsController < ApplicationController
   private
 
     def email_params
-      params.require(:email).permit(:subject, :body)
+      params.require(:email).permit(:subject, :body, :template)
     end
 end
